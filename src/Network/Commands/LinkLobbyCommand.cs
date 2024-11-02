@@ -40,15 +40,23 @@ public class LinkLobbyCommand : ICommandReceiver
     [Localized(nameof(APIOff))] public static string APIOff = "One or more of your API settings are off, and thus your lobby cannot be linked.";
     [Localized(nameof(SuccessfulLink))] public static string SuccessfulLink = "Your lobby has been successfully linked and your forum thread will now recieve updates about when you're in lobby, etc.";
     [Localized(nameof(AlreadyLinked))] public static string AlreadyLinked = "This lobby is already linked, there is no need to run this command again.";
-
+    [Localized(nameof(didNotRunLinkFirst))] public static string didNotRunLinkFirst = "Pssst... You need to run <b>/link</b> first."; // anger
     [Localized(nameof(couldNotLink))] public static string couldNotLink = "An error occurred, and we couldn't link your lobby.\nTry again in a few minutes or see if our lobby backend is down at <b>status.lotusau.top</b>";
 
-    private static readonly List<byte> lobbyLinkCheck = new();
+    private static readonly List<byte> lobbyLinkInit = new();
+    private static readonly List<byte> lobbyLinkConfirm = new();
 
     public void Receive(PlayerControl source, CommandContext context)
     {
         string message = string.Join(" ", context.Args);
         int gameId = AmongUsClient.Instance.GameId;
+
+        if (gameId.ToString() == "32") return; // local lobby
+
+        if (lobbyLinkConfirm.Contains(source.PlayerId))
+        {
+            ChatHandlers.NotPermitted(AlreadyLinked).Send(source); return;
+        }
 
         if (PrivacyPolicyInfo.Instance != null)
         {
@@ -73,13 +81,23 @@ public class LinkLobbyCommand : ICommandReceiver
 
         if (source == PlayerControl.LocalPlayer && message == "confirm")
         {
+            if (!lobbyLinkInit.Contains(source.PlayerId))
+            {
+                ChatHandlers.NotPermitted(didNotRunLinkFirst).Send(source); return;
+            }
+
             ChatHandler.Of(SuccessfulLink).Send(source);
             Async.Execute(SendLinkConfirmation(source, context));
 
 
         }
-        else
+        else if (source == PlayerControl.LocalPlayer && message == "")
         {
+            if (lobbyLinkInit.Contains(source.PlayerId))
+            {
+                ChatHandlers.NotPermitted(WaitingOnLink).Send(source);
+                return;
+            }
             GUIUtility.systemCopyBuffer = gameId.ToString(); //copy lobby id
             Log.PrintToConsole("Copied Lobby ID: " + gameId);
 
@@ -87,6 +105,7 @@ public class LinkLobbyCommand : ICommandReceiver
             Async.Execute(SendLinkRequest(source, context));
 
         }
+        else return;
 
     }
     private IEnumerator SendLinkRequest(PlayerControl source, CommandContext context)
@@ -99,15 +118,16 @@ public class LinkLobbyCommand : ICommandReceiver
         linkRequest.SetRequestHeader("link-type", "1");
         linkRequest.SetRequestHeader("game-id", stringifiedGameId);
         linkRequest.SetRequestHeader("host-name", source.name);
-        linkRequest.SetRequestHeader("region", "");
+        linkRequest.SetRequestHeader("region", ServerManager.Instance.CurrentRegion.Name);
         linkRequest.SetRequestHeader("mod-version", ProjectLotus.VisibleVersion);
-        linkRequest.SetRequestHeader("Authentication", source.FriendCode); // until i think of a better way to auth people, itll just use friendcode
+        linkRequest.SetRequestHeader("Authorization", source.FriendCode); // until i think of a better way to auth people, itll just use friendcode -> this should be fine with the idea I have.
 
         yield return linkRequest.SendWebRequest();
 
         switch (linkRequest.result)
         {
             case UnityWebRequest.Result.Success:
+                lobbyLinkInit.Add(source.PlayerId);
                 break;
             default:
                 ChatHandler.Of(couldNotLink).Send(source);
