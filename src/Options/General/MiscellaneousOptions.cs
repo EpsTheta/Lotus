@@ -6,6 +6,8 @@ using UnityEngine;
 using VentLib.Localization.Attributes;
 using VentLib.Options.UI;
 using VentLib.Options.IO;
+using System;
+using Lotus.Managers.Blackscreen;
 
 namespace Lotus.Options.General;
 
@@ -14,6 +16,11 @@ public class MiscellaneousOptions
 {
     private static Color _optionColor = new(1f, 0.75f, 0.81f);
     private static List<GameOption> additionalOptions = new();
+    private static Dictionary<string, Action> BlackscreenResolvers = new()
+    {
+        {"Legacy", () => ProjectLotus.Instance.SetBlackscreenResolver(md => new LegacyResolver(md))},
+        {"New", () => ProjectLotus.Instance.SetBlackscreenResolver(md => new BlackscreenResolver(md))},
+    };
 
     public string AssignedPet = null!;
     public int ChangeNameUsers;
@@ -23,6 +30,7 @@ public class MiscellaneousOptions
     public bool AutoDisplayCOD;
     public int SuffixMode;
     public bool ColoredNameMode;
+    public string CurrentResolver;
 
     public List<GameOption> AllOptions = new();
 
@@ -78,14 +86,14 @@ public class MiscellaneousOptions
             .Build());
 
         AllOptions.Add(new GameOptionBuilder()
-            .AddOnOffValues()
+            .AddBoolean()
             .Builder("Auto Display Results", _optionColor)
             .Name(MiscOptionTranslations.AutoDisplayResultsText)
             .BindBool(b => AutoDisplayLastResults = b)
             .Build());
 
         AllOptions.Add(new GameOptionBuilder()
-            .AddOnOffValues()
+            .AddBoolean()
             .Builder("Auto Display Cause of Death", _optionColor)
             .Name(MiscOptionTranslations.AutoDisplayCauseOfDeath)
             .BindBool(b => AutoDisplayCOD = b)
@@ -96,6 +104,17 @@ public class MiscellaneousOptions
             .Builder("Color Names", _optionColor)
             .Name(MiscOptionTranslations.ColorNames)
             .BindBool(b => ColoredNameMode = b)
+            .Build());
+
+        AllOptions.Add(new GameOptionBuilder()
+            .Builder("Blackscreen Resolver", _optionColor)
+            .Name(MiscOptionTranslations.BlackscreenResolver)
+            .Values(BlackscreenResolvers.Keys)
+            .BindString(s =>
+            {
+                CurrentResolver = s;
+                if (BlackscreenResolvers.TryGetValue(s, out Action? onSelect)) onSelect();
+            })
             .Build());
 
         AllOptions.AddRange(additionalOptions);
@@ -111,6 +130,13 @@ public class MiscellaneousOptions
     {
         additionalOptions.Add(option);
     }
+
+    /// <summary>
+    /// Adds your custom blackscreen resolver to the option selecter.
+    /// </summary>
+    /// <param name="name">The name of the specified blackscreen resolver.</param>
+    /// <param name="onSelect">The action that runs when option is chosen.</param>
+    public static void AddBlackscreenResolver(string name, Action onSelect) => BlackscreenResolvers.Add(name, onSelect);
 
     private GameOptionBuilder Builder(string key) => new GameOptionBuilder().Key(key).Color(_optionColor);
 
@@ -143,6 +169,9 @@ public class MiscellaneousOptions
 
         [Localized(nameof(ColorNames))]
         public static string ColorNames = "Color Names";
+
+        [Localized(nameof(BlackscreenResolver))]
+        public static string BlackscreenResolver = "Blackscreen Resolver";
     }
 
 }

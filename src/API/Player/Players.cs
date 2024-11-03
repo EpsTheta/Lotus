@@ -24,15 +24,7 @@ public static class Players
     public static IEnumerable<PlayerControl> GetPlayers(PlayerFilter filter = PlayerFilter.None)
     {
         IEnumerable<PlayerControl> players = GetAllPlayers();
-        if (filter.HasFlag(PlayerFilter.NonPhantom)) players = players.Where(p =>
-        {
-            if (p.PrimaryRole() is IPhantomRole)
-            {
-                IPhantomRole pr = p.PrimaryRole() as IPhantomRole;
-                return pr.IsCountedAsPlayer();
-            }
-            else return true;
-        });
+        if (filter.HasFlag(PlayerFilter.NonPhantom)) players = players.Where(p => p.PrimaryRole() is IPhantomRole phantomRole && phantomRole.IsCountedAsPlayer());
         if (filter.HasFlag(PlayerFilter.Alive)) players = players.Where(p => p.IsAlive());
         if (filter.HasFlag(PlayerFilter.Dead)) players = players.Where(p => !p.IsAlive());
         if (filter.HasFlag(PlayerFilter.Impostor)) players = players.Where(p => p.PrimaryRole().Faction.GetType() == typeof(ImpostorFaction));

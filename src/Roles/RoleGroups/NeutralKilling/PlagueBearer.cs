@@ -78,8 +78,9 @@ public class PlagueBearer : NeutralKillingBase
         return false;
     }
 
-    [RoleAction(LotusActionType.RoundStart)]
     [RoleAction(LotusActionType.RoundEnd)]
+    [RoleAction(LotusActionType.RoundStart)]
+    [RoleAction(LotusActionType.Disconnect, ActionFlag.GlobalDetector)]
     [RoleAction(LotusActionType.PlayerDeath, ActionFlag.GlobalDetector)]
     public void CheckPestilenceTransform(ActionHandle handle)
     {
