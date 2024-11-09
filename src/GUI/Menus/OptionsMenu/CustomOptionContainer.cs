@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using Lotus.GUI.Menus.OptionsMenu.Components;
 using Lotus.GUI.Menus.OptionsMenu.Submenus;
 using Lotus.Logging;
+using Lotus.Utilities;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -21,10 +24,12 @@ namespace Lotus.GUI.Menus.OptionsMenu;
 public class CustomOptionContainer : MonoBehaviour
 {
     [Localized(nameof(GeneralButton))] private static string GeneralButton = "General";
+    [Localized(nameof(LotusButton))] private static string LotusButton = "Lotus";
     [Localized(nameof(GraphicsButton))] private static string GraphicsButton = "Graphics";
-    [Localized(nameof(SoundButton))] private static string SoundButton = "Sound";
     [Localized(nameof(VentLibButton))] private static string VentLibButton = "VentLib";
     [Localized(nameof(AddonsButton))] private static string AddonsButton = "Addons";
+    [Localized(nameof(InnerslothButton))] private static string InnerslothButton = "Innersloth";
+
     [Localized(nameof(ReturnButton))] private static string ReturnButton = "Return";
     [Localized(nameof(LeaveGameButton))] private static string LeaveGameButton = "Leave Game";
 
@@ -34,21 +39,25 @@ public class CustomOptionContainer : MonoBehaviour
     public SpriteRenderer background;
 
     public PassiveButton generalButton;
+    public PassiveButton lotusButton;
     public PassiveButton graphicButton;
-    public PassiveButton soundButton;
     public PassiveButton ventLibButton;
     public PassiveButton addonsButton;
+    public PassiveButton innerslothButton;
 
     public PassiveButton returnButton;
     public PassiveButton exitButton;
 
     private GeneralMenu generalMenu;
+    private LotusMenu lotusMenu;
     private GraphicsMenu graphicsMenu;
-    private SoundMenu soundMenu;
     private VentLibMenu ventLibMenu;
+    private AddonsMenu addonsMenu;
+    private InnerslothMenu innerslothMenu;
 
-    private MonoToggleButton monoToggleButton;
+    // private SoundMenu soundMenu;
 
+    private PassiveButton? selectedButton;
     private PassiveButton? template;
     private const int ButtonPpu = 600;
 
@@ -61,42 +70,60 @@ public class CustomOptionContainer : MonoBehaviour
         background.sprite = OptionMenuResources.OptionsBackgroundSprite;
 
         generalMenu = gameObject.AddComponent<GeneralMenu>();
+        lotusMenu = gameObject.AddComponent<LotusMenu>();
         graphicsMenu = gameObject.AddComponent<GraphicsMenu>();
-        soundMenu = gameObject.AddComponent<SoundMenu>();
         ventLibMenu = gameObject.AddComponent<VentLibMenu>();
+        addonsMenu = gameObject.AddComponent<AddonsMenu>();
+        innerslothMenu = gameObject.AddComponent<InnerslothMenu>();
     }
 
     public void PassMenu(OptionsMenuBehaviour menuBehaviour)
     {
         generalMenu.PassMenu(menuBehaviour);
+        lotusMenu.PassMenu(menuBehaviour);
         graphicsMenu.PassMenu(menuBehaviour);
-        soundMenu.PassMenu(menuBehaviour);
         ventLibMenu.PassMenu(menuBehaviour);
+        addonsMenu.PassMenu(menuBehaviour);
+        innerslothMenu.PassMenu(menuBehaviour);
 
         ButtonCreator buttonCreator = CreateButton(menuBehaviour);
-        Func<Sprite, string, PassiveButton> buttonFunc = (sprite, text) => buttonCreator(sprite, text);
+        Func<Sprite, Sprite, string, PassiveButton> buttonFunc = (inactive, active, text) => buttonCreator(inactive, active, text);
 
-        generalButton = buttonFunc(OptionMenuResources.GeneralButton, GeneralButton);
-        generalButton.transform.localPosition += new Vector3(2.6f, 0f);
+        // CREATE BUTTONS
 
-        graphicButton = buttonFunc(OptionMenuResources.GraphicsButton, GraphicsButton);
-        graphicButton.transform.localPosition += new Vector3(2.6f, -0.5f);
+        generalButton = buttonFunc(OptionMenuResources.GeneralButton_Inactive, OptionMenuResources.GeneralButton_Highlight, GeneralButton);
+        generalButton.transform.localPosition = new Vector3(-3.386f, 2.033f, -1f);
 
-        soundButton = buttonFunc(OptionMenuResources.SoundButton, SoundButton);
-        soundButton.transform.localPosition += new Vector3(2.6f, -1f);
+        lotusButton = buttonFunc(OptionMenuResources.LotusButton_Inactive, OptionMenuResources.LotusButton_Highlight, LotusButton);
+        lotusButton.transform.localPosition = new Vector3(-3.386f, 1.383f, -1f);
 
-        ventLibButton = buttonFunc(OptionMenuResources.VentLibButton, VentLibButton);
-        ventLibButton.transform.localPosition += new Vector3(2.6f, -1.5f);
+        graphicButton = buttonFunc(OptionMenuResources.GraphicsButton_Inactive, OptionMenuResources.GraphicsButton_Highlight, GraphicsButton);
+        graphicButton.transform.localPosition = new Vector3(-3.386f, 0.7265f, -1f);
 
-        addonsButton = buttonFunc(OptionMenuResources.AddonsButton, AddonsButton);
-        addonsButton.transform.localPosition += new Vector3(2.6f, -2f);
+        ventLibButton = buttonFunc(OptionMenuResources.VentLibButton_Inactive, OptionMenuResources.VentLibButton_Highlight, VentLibButton);
+        ventLibButton.transform.localPosition = new Vector3(-3.386f, 0.0798f, -1f);
 
-        returnButton = buttonFunc(OptionMenuResources.ReturnButton, ReturnButton);
-        returnButton.transform.localPosition += new Vector3(2.6f, -4.5f);
+        addonsButton = buttonFunc(OptionMenuResources.AddonsButton_Inactive, OptionMenuResources.AddonsButton_Highlight, AddonsButton);
+        addonsButton.transform.localPosition = new Vector3(-3.386f, -0.5778f, -1f);
+
+        innerslothButton = buttonFunc(OptionMenuResources.InnerslothButton_Inactive, OptionMenuResources.InnerslothButton_Highlight, InnerslothButton);
+        innerslothButton.transform.localPosition = new Vector3(-3.386f, -1.2295f, -1f);
+
+        // FINISH BUTTONS
+
+        returnButton = buttonFunc(OptionMenuResources.Bottom_Inactive, OptionMenuResources.ReturnButton_Highlight, ReturnButton);
+        returnButton.GetComponentInChildren<TextMeshPro>().transform.localPosition = new Vector3(0, -.01f, 0f);
+        returnButton.GetComponentInChildren<TextMeshPro>().transform.localScale = new Vector3(2.5f, 0.8f, 1f);
+        returnButton.transform.localPosition = new Vector3(-3.87f, -2.67f, -1f);
+        returnButton.transform.localScale = new Vector3(0.3764f, 1.4f, 1);
         returnButton.OnClick.AddListener((Action)menuBehaviour.Close);
 
-        exitButton = buttonFunc(OptionMenuResources.ExitButton, LeaveGameButton);
-        exitButton.transform.localPosition += new Vector3(2.6f, -4f);
+        exitButton = buttonFunc(OptionMenuResources.Bottom_Inactive, OptionMenuResources.ExitButton_Highlight, LeaveGameButton);
+        exitButton.GetComponentInChildren<TextMeshPro>().transform.localPosition = new Vector3(0, -.01f, -1);
+        exitButton.GetComponentInChildren<TextMeshPro>().transform.localScale = new Vector3(1.8f, 0.9f, 1f);
+        exitButton.transform.localPosition = new Vector3(-2.905f, -2.67f, -1f);
+        exitButton.transform.localScale = new Vector3(0.3764f, 1.4f, 1f);
+
         menuBehaviour.FindChildOrEmpty<PassiveButton>("LeaveGameButton").Handle(exitPassiveButton =>
         {
             exitPassiveButton.gameObject.SetActive(false);
@@ -123,25 +150,28 @@ public class CustomOptionContainer : MonoBehaviour
     {
         boundButtons = new List<(PassiveButton, IBaseOptionMenuComponent)>
         {
-            (generalButton, generalMenu), (graphicButton, graphicsMenu), (soundButton, soundMenu), (ventLibButton, ventLibMenu)
+            (generalButton, generalMenu), (lotusButton, lotusMenu), (graphicButton, graphicsMenu), (ventLibButton, ventLibMenu), (addonsButton, addonsMenu), (innerslothButton, innerslothMenu)
         };
 
         UnityAction ActionFunc(int i) =>
             (Action)(() =>
             {
+                selectedButton = boundButtons[i].Item1;
                 boundButtons.ForEach((b, i1) =>
                 {
-                    if (i == i1)
-                        b.Item2.Open();
-                    else
-                        b.Item2.Close();
+                    b.Item1.OnMouseOut.Invoke();
+                    if (i == i1) b.Item2.Open();
+                    else b.Item2.Close();
                 });
+                SoundManager.Instance.PlaySound(selectedButton.ClickSound, false);
             });
 
         generalButton.OnClick.AddListener(ActionFunc(0));
-        graphicButton.OnClick.AddListener(ActionFunc(1));
-        soundButton.OnClick.AddListener(ActionFunc(2));
+        lotusButton.OnClick.AddListener(ActionFunc(1));
+        graphicButton.OnClick.AddListener(ActionFunc(2));
         ventLibButton.OnClick.AddListener(ActionFunc(3));
+        addonsButton.OnClick.AddListener(ActionFunc(4));
+        innerslothButton.OnClick.AddListener(ActionFunc(5));
     }
 
 
@@ -174,29 +204,37 @@ public class CustomOptionContainer : MonoBehaviour
     //         return button;
     //     };
     // }
-    private delegate PassiveButton ButtonCreator(Sprite sprite, string text);
+    private delegate PassiveButton ButtonCreator(Sprite inactiveSprite, Sprite activeSprite, string text);
 
     private ButtonCreator CreateButton(OptionsMenuBehaviour menuBehaviour)
     {
-        return (sprite, text) =>
+        return (inactiveSprite, activeSprite, text) =>
         {
             PassiveButton button = Instantiate(template ??= menuBehaviour.GetComponentsInChildren<PassiveButton>().Last(), transform);
             TextMeshPro tmp = button.GetComponentInChildren<TextMeshPro>();
             SpriteRenderer render = button.GetComponentInChildren<SpriteRenderer>();
-            render.sprite = sprite;
+            render.sprite = inactiveSprite;
             render.color = Color.white;
+            button.activeSprites = null;
+            // button.name = text.ToLowerInvariant().Replace(" ", "");
+
+            button.OnMouseOver = new UnityEngine.Events.UnityEvent();
+            button.OnMouseOut = new UnityEngine.Events.UnityEvent();
+            button.OnMouseOver.AddListener((Action)(() => render.sprite = activeSprite));
+            button.OnMouseOut.AddListener((Action)(() => render.sprite = button == selectedButton ? activeSprite : inactiveSprite));
 
             button.OnClick = new Button.ButtonClickedEvent();
 
             var buttonTransform = button.transform;
-            buttonTransform.localScale -= new Vector3(0.33f, 0f, 0f);
-            buttonTransform.localPosition += new Vector3(-4.6f, 2.5f, 0f);
+            buttonTransform.localScale = new Vector3(0.765f, 1.417f, 1f);
 
             tmp.font = GetGeneralFont();
             tmp.fontSize = 2.8f;
             tmp.text = text;
             tmp.color = Color.white;
-            tmp.transform.localPosition += new Vector3(0.13f, 0f);
+            // tmp.transform.localPosition += new Vector3(0.13f, 0f);
+            tmp.transform.localPosition = new Vector3(.4f, 0f, 0f);
+            tmp.transform.localScale = new Vector3(1.3f, .8f, 1f);
 
             return button;
         };
@@ -207,6 +245,9 @@ public class CustomOptionContainer : MonoBehaviour
     {
         return CustomOptionFont.OrElseSet(() =>
         {
+            var embeddedFont = AssetLoader.LoadFont("Lotus.assets.Fonts.NunitoMedium.ttf");
+            if (embeddedFont != null) return embeddedFont;
+            DevLogger.Log("couldn't use embedded font. using a random system font.");
             string? path = Font.GetPathsToOSFonts()
                 .FirstOrOptional(f => f.Contains("ARLRDBD"))
                 .OrElseGet(() =>
@@ -214,7 +255,7 @@ public class CustomOptionContainer : MonoBehaviour
                         .OrElseGet(() => Font.GetPathsToOSFonts().Count > 0 ? Font.GetPathsToOSFonts()[0] : null)
                 );
 
-            return path == null ? Resources.LoadAll("Fonts & Materials").ToArray().Select(t => t.TryCast<TMP_FontAsset>()).Last(t => t != null) : TMP_FontAsset.CreateFontAsset(new Font(path));
+            return path == null ? Resources.LoadAll("Fonts & Materials").ToArray().Select(t => t.TryCast<TMP_FontAsset>()).Last(t => t != null)! : TMP_FontAsset.CreateFontAsset(new Font(path));
         });
     }
 }

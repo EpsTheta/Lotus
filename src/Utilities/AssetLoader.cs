@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using TMPro;
 using UnityEngine;
 using VentLib.Utilities.Extensions;
 
@@ -40,6 +41,38 @@ public class AssetLoader
         }
 
         return sprite;
+    }
+    public static TMP_FontAsset LoadFont(string path, Assembly? assembly = null)
+    {
+        assembly ??= Assembly.GetCallingAssembly();
+        try
+        {
+            using Stream? stream = assembly.GetManifestResourceStream(path);
+            if (stream == null)
+            {
+                log.Fatal($"Embedded font resource '{path}' not found.");
+                return null!;
+            }
+
+            byte[] fontData = new byte[stream.Length];
+            stream.Read(fontData, 0, fontData.Length);
+
+            string tempFontPath = Path.Combine(Path.GetTempPath(), "tempEmbeddedFont.ttf");
+            File.WriteAllBytes(tempFontPath, fontData);
+
+            Font customFont = new(tempFontPath);
+            TMP_FontAsset tmpFontAsset = TMP_FontAsset.CreateFontAsset(customFont);
+
+            File.Delete(tempFontPath);
+            stream.Dispose();
+
+            return tmpFontAsset;
+        }
+        catch (Exception ex)
+        {
+            log.Exception($"Failed to load embedded font: {ex.Message}");
+            return null!;
+        }
     }
 
     public static bool ResourceExists(string path, Assembly? assembly = null)

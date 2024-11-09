@@ -2,7 +2,7 @@ namespace Lotus.Network;
 
 public class NetConstants
 {
-    public const string Host = "https://lotusapi.vercel.app/api/"; // need to ask disc if he wants the subdomain 'api.lotusau.top/' for this
+    public const string Host = "https://api.lotusau.top/api/"; // too lazy to fix the redundant /api
 
     public const string LobbyHost = "https://lobbies.lotusau.top/";
     //public const string LobbyHost = "https://testing-lotus.eps.lol/";

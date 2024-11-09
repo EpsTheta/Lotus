@@ -7,9 +7,8 @@ using Lotus.Utilities;
 using UnityEngine;
 using VentLib.Utilities.Attributes;
 using VentLib.Utilities.Extensions;
-using Lotus.Logging;
-using Lotus.Network.PrivacyPolicy.Patches;
-using Lotus.Network.PrivacyPolicy;
+using VentLib.Utilities;
+using System.Globalization;
 
 namespace Lotus.GUI.Menus.OptionsMenu.Submenus;
 
@@ -19,6 +18,7 @@ public class GeneralMenu : MonoBehaviour, IBaseOptionMenuComponent
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(GeneralMenu));
 
     private TextMeshPro title;
+    private TextMeshPro soundHeader;
     private TextMeshPro controlsText;
 
     private MonoToggleButton censorChatButton;
@@ -30,12 +30,17 @@ public class GeneralMenu : MonoBehaviour, IBaseOptionMenuComponent
     private MonoToggleButton changeKeyBindingButton;
     private MonoToggleButton languageButton;
 
-    private MonoToggleButton privacyPolicyLink;
-    private MonoToggleButton connectWithAPI;
-    private MonoToggleButton anonymousBugReports;
-
     private TiledToggleButton controlScheme;
     private LanguageSetter languageSetter;
+
+    // SOUND STUFF
+    private SlideBar sfxSlider;
+    private SlideBar musicSlider;
+
+    private MonoToggleButton lobbyMusicButton;
+
+    private TextMeshPro musicText;
+    private TextMeshPro sfxText;
 
     private GameObject anchorObject;
     private bool languageSetterExists;
@@ -44,8 +49,9 @@ public class GeneralMenu : MonoBehaviour, IBaseOptionMenuComponent
     {
         anchorObject = new GameObject();
         anchorObject.transform.SetParent(transform);
-        anchorObject.transform.localPosition += new Vector3(2f, 2f);
+        anchorObject.transform.localPosition = new Vector3(2f, 2f, 0f);
         anchorObject.transform.localScale = new Vector3(1f, 1f, 1);
+        anchorObject.name = "General";
     }
 
     private void Start()
@@ -53,6 +59,8 @@ public class GeneralMenu : MonoBehaviour, IBaseOptionMenuComponent
         title.text = "General";
         title.gameObject.SetActive(false);
         controlsText.text = "Controls";
+
+        soundHeader.text = "Sounds";
     }
 
     private void Update()
@@ -63,12 +71,16 @@ public class GeneralMenu : MonoBehaviour, IBaseOptionMenuComponent
 
     public void PassMenu(OptionsMenuBehaviour optionsMenuBehaviour)
     {
-        GameObject textGameObject = gameObject.CreateChild("Title", new Vector3(8.6f, -1.8f));
+        GameObject textGameObject = gameObject.CreateChild("GeneralTitle", new Vector3(8, -1.85f, 0));
         title = textGameObject.AddComponent<TextMeshPro>();
         title.font = CustomOptionContainer.GetGeneralFont();
         title.fontSize = 5.35f;
-        title.transform.localPosition += new Vector3(-3.3f, 0.2f);
         title.gameObject.layer = LayerMask.NameToLayer("UI");
+        soundHeader = Instantiate(title, anchorObject.transform);
+        soundHeader.font = CustomOptionContainer.GetGeneralFont();
+        soundHeader.transform.localPosition = new Vector3(8.07f, -3.95f, -1);
+        soundHeader.transform.localScale = new Vector3(1f, 1f, 1f);
+        soundHeader.name = "SoundsTitle";
 
         languageSetterExists = false;
         GameObject censorGameObject = new("Censor Button");
@@ -80,7 +92,7 @@ public class GeneralMenu : MonoBehaviour, IBaseOptionMenuComponent
         censorChatButton.SetToggleOnAction(() => DataManager.Settings.Multiplayer.CensorChat = true);
         censorChatButton.SetToggleOffAction(() => DataManager.Settings.Multiplayer.CensorChat = false);
         censorChatButton.SetState(DataManager.Settings.Multiplayer.CensorChat);
-        censorGameObject.transform.localPosition += new Vector3(0.5f, 0.25f);
+        censorGameObject.transform.localPosition = new Vector3(-1.995f, -3.066f, -1f);
 
         GameObject fIGameObject = new("Friend & Invite Button");
         fIGameObject.transform.SetParent(anchorObject.transform);
@@ -91,7 +103,7 @@ public class GeneralMenu : MonoBehaviour, IBaseOptionMenuComponent
         friendInviteButton.SetToggleOnAction(() => DataManager.Settings.Multiplayer.AllowFriendInvites = true);
         friendInviteButton.SetToggleOffAction(() => DataManager.Settings.Multiplayer.AllowFriendInvites = false);
         friendInviteButton.SetState(DataManager.Settings.Multiplayer.AllowFriendInvites);
-        fIGameObject.transform.localPosition += new Vector3(0.5f, -1.25f);
+        fIGameObject.transform.localPosition = new Vector3(2.048f, -3.066f, -1f);
 
         optionsMenuBehaviour.EnableFriendInvitesButton.gameObject.SetActive(false);
 
@@ -104,7 +116,7 @@ public class GeneralMenu : MonoBehaviour, IBaseOptionMenuComponent
         colorblindTextButton.SetToggleOnAction(() => DataManager.Settings.Accessibility.ColorBlindMode = true);
         colorblindTextButton.SetToggleOffAction(() => DataManager.Settings.Accessibility.ColorBlindMode = false);
         colorblindTextButton.SetState(DataManager.Settings.Accessibility.ColorBlindMode);
-        colorblindGameObject.transform.localPosition += new Vector3(0.5f, -0.25f);
+        colorblindGameObject.transform.localPosition = new Vector3(-1.995f, -3.748f, -1f);
         optionsMenuBehaviour.ColorBlindButton.gameObject.SetActive(false);
 
         GameObject streamerGameObject = new("Streamer Mode Button");
@@ -116,77 +128,28 @@ public class GeneralMenu : MonoBehaviour, IBaseOptionMenuComponent
         streamerModeButton.SetToggleOnAction(() => DataManager.Settings.Gameplay.StreamerMode = true);
         streamerModeButton.SetToggleOffAction(() => DataManager.Settings.Gameplay.StreamerMode = false);
         streamerModeButton.SetState(DataManager.Settings.Gameplay.StreamerMode);
-        streamerGameObject.transform.localPosition += new Vector3(0.5f, -0.75f);
+        streamerGameObject.transform.localPosition = new Vector3(2.048f, -3.748f, -1f);
         optionsMenuBehaviour.StreamerModeButton.gameObject.SetActive(false);
 
         GameObject controlGameObject = new("Control Scheme Button");
         controlsText = Instantiate(title, anchorObject.transform);
-        controlsText.transform.localPosition += new Vector3(-1.3f, -0.2f);
+        // controlsText.transform.localPosition = new Vector3(0, 0, 0);
+
         controlGameObject.transform.SetParent(anchorObject.transform);
         controlGameObject.transform.localScale = new Vector3(1f, 1f, 1f);
+
         controlScheme = controlGameObject.AddComponent<TiledToggleButton>();
         controlScheme.SetLeftButtonText("Mouse");
         controlScheme.SetRightButtonText("Mouse & Keyboard");
         controlScheme.SetState(DataManager.Settings.input.inputMode is ControlTypes.Keyboard);
-
-        // ==========================================
-        //     Privacy Policy
-        // ==========================================
-        bool openLink = false; // pl auto runs the action when it is made visible. so we keep track of the first visit to stop this.
-
-        GameObject privacyPolicyLinkObject = new("Privacy Policy Link");
-        privacyPolicyLinkObject.transform.SetParent(anchorObject.transform);
-        privacyPolicyLinkObject.transform.localScale = new Vector3(1f, 1f, 1f);
-        privacyPolicyLink = privacyPolicyLinkObject.AddComponent<MonoToggleButton>();
-        privacyPolicyLink.ConfigureAsPressButton("View Privacy Policy", () =>
-        {
-            if (!openLink)
-            {
-                openLink = true;
-                return;
-            }
-            Application.OpenURL(PrivacyPolicyPatch.PrivacyPolicyLink);
-        });
-        privacyPolicyLinkObject.transform.localPosition += new Vector3(3f, -0.25f);
-
-        GameObject anonReportObject = new("Anonymous Bug Reports");
-        anonReportObject.transform.SetParent(anchorObject.transform);
-        anonReportObject.transform.localScale = new Vector3(1f, 1f, 1f);
-        anonymousBugReports = anonReportObject.AddComponent<MonoToggleButton>();
-        anonymousBugReports.SetOnText("Anonymous Bug Reports: ON");
-        anonymousBugReports.SetOffText("Anonymous Bug Reports: OFF");
-        anonymousBugReports.SetToggleOnAction(() => PrivacyPolicyPatch.EditPrivacyPolicy(PrivacyPolicyEditType.AnonymousBugReports, true));
-        anonymousBugReports.SetToggleOffAction(() => PrivacyPolicyPatch.EditPrivacyPolicy(PrivacyPolicyEditType.AnonymousBugReports, false));
-        anonymousBugReports.SetState(PrivacyPolicyInfo.Instance.AnonymousBugReports);
-        anonReportObject.transform.localPosition += new Vector3(3f, -1.25f);
-
-        GameObject connectAPIObject = new("Connect With API");
-        connectAPIObject.transform.SetParent(anchorObject.transform);
-        connectAPIObject.transform.localScale = new Vector3(1f, 1f, 1f);
-        connectWithAPI = connectAPIObject.AddComponent<MonoToggleButton>();
-        connectWithAPI.SetOnText("Connect With API: ON");
-        connectWithAPI.SetOffText("Connect With API: Off");
-        connectWithAPI.SetToggleOnAction(() =>
-        {
-            PrivacyPolicyPatch.EditPrivacyPolicy(PrivacyPolicyEditType.ConnectWithAPI, true);
-            anonReportObject.SetActive(true);
-        });
-        connectWithAPI.SetToggleOffAction(() =>
-        {
-            PrivacyPolicyPatch.EditPrivacyPolicy(PrivacyPolicyEditType.ConnectWithAPI, false);
-            anonReportObject.SetActive(false);
-        });
-        connectWithAPI.SetState(PrivacyPolicyInfo.Instance.ConnectWithAPI);
-        connectAPIObject.transform.localPosition += new Vector3(3f, -0.75f);
-
-        /// Done
 
         PassiveButton joystickModeButton = optionsMenuBehaviour.gameObject.transform.Find("GeneralTab/ControlGroup/JoystickModeButton").GetComponent<PassiveButton>();
         PassiveButton touchModeButton = optionsMenuBehaviour.gameObject.transform.Find("GeneralTab/ControlGroup/TouchModeButton").GetComponent<PassiveButton>();
 
         controlScheme.SetToggleOffAction(() => joystickModeButton.ReceiveClickDown());
         controlScheme.SetToggleOnAction(() => touchModeButton.ReceiveClickDown());
-        controlGameObject.transform.localPosition += new Vector3(2.25f, 2f);
+        controlGameObject.transform.localPosition = new Vector3(0, 0, 0);
+
         optionsMenuBehaviour.MouseAndKeyboardOptions.gameObject.SetActive(false);
         optionsMenuBehaviour.MouseAndKeyboardOptions.gameObject.GetComponentsInChildren<Component>(true).ForEach(c => c.gameObject.SetActive(false));
 
@@ -203,12 +166,13 @@ public class GeneralMenu : MonoBehaviour, IBaseOptionMenuComponent
         mouseMovementButton.SetToggleOnAction(() => optionsMenuBehaviour.DisableMouseMovement.UpdateText(true));
         mouseMovementButton.SetToggleOffAction(() => optionsMenuBehaviour.DisableMouseMovement.UpdateText(false));
         mouseMovementButton.SetState(optionsMenuBehaviour.DisableMouseMovement.onState);
-        mouseMovementObject.transform.localPosition += new Vector3(1f, 1.5f);
+        mouseMovementObject.transform.localPosition = new Vector3(-0.983f, -0.328f, -1f);
+
         optionsMenuBehaviour.DisableMouseMovement.gameObject.SetActive(false);
 
         // ==========================================
         //     Keybinding Button
-        // =============================================
+        // ==========================================
         GameObject keybindingObject = new("Keybinding Button");
         keybindingObject.transform.SetParent(anchorObject.transform);
         keybindingObject.transform.localScale = new Vector3(1f, 1f, 1f);
@@ -220,22 +184,83 @@ public class GeneralMenu : MonoBehaviour, IBaseOptionMenuComponent
             optionsMenuBehaviour.KeyboardOptions.GetComponentInChildren<PassiveButton>(true).ReceiveClickDown();
             changeKeyBindingButton.SetState(false, true);
         });
-        keybindingObject.transform.localPosition += new Vector3(3.5f, 1.5f);
+        keybindingObject.transform.localPosition = new Vector3(1.04f, -0.328f, -1f);
+
         optionsMenuBehaviour.KeyboardOptions.SetActive(false);
         optionsMenuBehaviour.MouseAndKeyboardOptions.GetComponentsInChildren<Component>().ForEach(c => c.gameObject.SetActive(false));
 
-        // =======================================
-        //          Language Button
-        // =========================================
+        // ==========================================
+        //              SOUND STUFF
+        // ==========================================
+
+        musicSlider = Instantiate(optionsMenuBehaviour.MusicSlider, anchorObject.transform);
+        musicSlider.transform.localPosition = new Vector3(-3.85f, -2.42f, 1f);
+        musicSlider.transform.localScale = new Vector3(1.1f, 1.1f, 1f);
+
+        var musicTitleText = musicSlider.GetComponentInChildren<TextMeshPro>();
+        musicTitleText.transform.localPosition += new Vector3(0.7f, 0.25f);
+
+        musicText = Instantiate(musicTitleText, musicSlider.transform);
+        musicText.transform.localPosition += new Vector3(4f, 0.25f);
+        musicSlider.OnValueChange.AddListener((Action)(() =>
+        {
+            musicText.text = CalculateVolPercent(musicSlider.Value);
+            optionsMenuBehaviour.MusicSlider.SetValue(musicSlider.Value);
+            optionsMenuBehaviour.MusicSlider.OnValidate();
+        }));
+
+        sfxSlider = Instantiate(optionsMenuBehaviour.SoundSlider, anchorObject.transform);
+        sfxSlider.transform.localPosition = new Vector3(-3.85f, -3.1f, 1f);
+        sfxSlider.transform.localScale = new Vector3(1.1f, 1.1f, 1f);
+
+        var sfxTitleText = sfxSlider.GetComponentInChildren<TextMeshPro>();
+        sfxTitleText.transform.localPosition += new Vector3(0.7f, 0.25f);
+
+        sfxText = Instantiate(sfxTitleText, sfxSlider.transform);
+        sfxText.transform.localPosition += new Vector3(4f, 0.25f);
+        sfxSlider.OnValueChange.AddListener((Action)(() =>
+        {
+            sfxText.text = CalculateVolPercent(sfxSlider.Value);
+            optionsMenuBehaviour.SoundSlider.SetValue(sfxSlider.Value);
+            optionsMenuBehaviour.SoundSlider.OnValidate();
+        }));
+
+        // ==========================================
+        //              LOBBY MUSIC
+        // ==========================================
+
+        GameObject lobbyGameObject = new("Lobby Music");
+        lobbyGameObject.transform.SetParent(anchorObject.transform);
+        lobbyGameObject.transform.localScale = new Vector3(1f, 1f, 1f);
+        lobbyMusicButton = lobbyGameObject.AddComponent<MonoToggleButton>();
+        lobbyMusicButton.SetOnText("Lobby Music: DEFAULT");
+        lobbyMusicButton.SetOffText("Lobby Music: OFF");
+        lobbyMusicButton.SetToggleOnAction(() =>
+        {
+            ClientOptions.SoundOptions.CurrentSoundType = Options.Client.SoundOptions.SoundTypes.Default;
+            if (LobbyBehaviour.Instance == null) return;
+            else SoundManager.Instance.CrossFadeSound("MapTheme", LobbyBehaviour.Instance.MapTheme, 0.5f, 1.5f);
+        });
+        lobbyMusicButton.SetToggleOffAction(() =>
+        {
+            ClientOptions.SoundOptions.CurrentSoundType = Options.Client.SoundOptions.SoundTypes.Off;
+            if (LobbyBehaviour.Instance == null) return;
+            else SoundManager.Instance.StopNamedSound("MapTheme");
+        });
+        lobbyMusicButton.SetState(ClientOptions.SoundOptions.CurrentSoundType == Options.Client.SoundOptions.SoundTypes.Default);
+        lobbyGameObject.transform.localPosition = new Vector3(0.029f, -3.066f, -1f);
+
+        // ==========================================
+        //               Language Button
+        // ==========================================
         LanguageSetter languageSetterPrefab = FindObjectOfType<LanguageSetter>(true);
         if (languageSetterPrefab == null) return;
 
-
-
         languageSetter = Instantiate(languageSetterPrefab, anchorObject.transform);
         languageSetter.transform.localPosition -= new Vector3(2.5f, 1.88f);
+        languageSetter.FindChild<Transform>("Backdrop").localScale = new Vector3(20, 10, 0);
 
-        GameObject languageButtonObject = anchorObject.CreateChild("Language Button", new Vector3(1f, -1.75f));
+        GameObject languageButtonObject = anchorObject.CreateChild("Language Button", new Vector3(0.029f, -3.748f, -1));
         languageButton = languageButtonObject.AddComponent<MonoToggleButton>();
         languageButton.SetOffText(DataManager.Settings.language.language);
         languageButton.SetToggleOnAction(() =>
@@ -248,15 +273,30 @@ public class GeneralMenu : MonoBehaviour, IBaseOptionMenuComponent
     }
 
 
-
     public void Open()
     {
         // log.Fatal("Opening!!");
         anchorObject.SetActive(true);
+        Async.Schedule(() =>
+        {
+            musicText.text = CalculateVolPercent(musicSlider.Value);
+            sfxText.text = CalculateVolPercent(sfxSlider.Value);
+        }, 0.000001f);
+        if (soundHeader.color != Color.white)
+            Async.Schedule(() =>
+            {
+                if (soundHeader.color == Color.white) return;
+                soundHeader.transform.localPosition = new Vector3(-2f, -1.4f, 0f);
+                soundHeader.transform.localScale = new Vector3(2f, 2f, 2f);
+            }, .01f);
     }
 
     public void Close()
     {
         anchorObject.SetActive(false);
+    }
+    private static string CalculateVolPercent(float value)
+    {
+        return Math.Round(value * 100, 0).ToString(CultureInfo.InvariantCulture) + "%";
     }
 }

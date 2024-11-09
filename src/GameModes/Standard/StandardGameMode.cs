@@ -109,8 +109,6 @@ public class StandardGameMode : GameMode
             FrozenPlayer? fp = Game.MatchData.FrozenPlayers.GetValueOrDefault(player.GetGameID());
             if (fp != null) DeathCommand.ShowMyDeath(player, fp);
         }
-
-
         Players.GetAllPlayers().Where(p => p.PlayerId != player.PlayerId)
             .SelectMany(p => p.NameModel().ComponentHolders())
             .ForEach(holders =>

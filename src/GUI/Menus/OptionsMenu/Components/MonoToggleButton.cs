@@ -31,6 +31,8 @@ public class MonoToggleButton : MonoBehaviour
         PassiveButton template = FindObjectsOfType<PassiveButton>(true).First(pb => pb.name == "CensorChatButton");
         enabledButton = Instantiate(template, transform);
         enabledButton.OnClick = new Button.ButtonClickedEvent();
+        enabledButton.OnMouseOut = new UnityEngine.Events.UnityEvent();
+        enabledButton.OnMouseOver = new UnityEngine.Events.UnityEvent();
         enabledButton.OnClick.AddListener((Action)(() => SetOffState()));
 
         enabledRender = enabledButton.GetComponentInChildren<SpriteRenderer>();
@@ -39,23 +41,33 @@ public class MonoToggleButton : MonoBehaviour
 
         disabledButton = Instantiate(template, transform);
         disabledButton.OnClick = new Button.ButtonClickedEvent();
+        disabledButton.OnMouseOut = new UnityEngine.Events.UnityEvent();
+        disabledButton.OnMouseOver = new UnityEngine.Events.UnityEvent();
         disabledButton.OnClick.AddListener((Action)(() => SetOnState()));
 
         disabledRender = disabledButton.GetComponentInChildren<SpriteRenderer>();
         disabledRender.color = Color.white;
         disabledRender.sprite = OptionMenuResources.ButtonOffSprite;
 
+        disabledButton.activeSprites = null;
+        disabledButton.OnMouseOut.AddListener((Action)(() => disabledRender.sprite = OptionMenuResources.ButtonOffSprite));
+        disabledButton.OnMouseOver.AddListener((Action)(() => disabledRender.sprite = OptionMenuResources.ButtonOnSprite));
+
         enabledTextTMP = enabledButton.GetComponentInChildren<TextMeshPro>();
         enabledTextTMP.font = CustomOptionContainer.GetGeneralFont();
         enabledTextTMP.color = new Color(0.11f, 0.51f, 0.6f);
         enabledTextTMP.text = enabledText;
         enabledTextTMP.enableWordWrapping = false;
+        enabledTextTMP.transform.localScale = new Vector3(1.3f, 0.8f, enabledTextTMP.transform.localScale.z);
 
         disabledTextTMP = disabledButton.GetComponentInChildren<TextMeshPro>();
         disabledTextTMP.font = CustomOptionContainer.GetGeneralFont();
         disabledTextTMP.color = new Color(0.34f, 0.36f, 0.37f);
         disabledTextTMP.text = disabledText;
         disabledTextTMP.enableWordWrapping = false;
+        disabledTextTMP.transform.localScale = new Vector3(1.3f, 0.8f, disabledTextTMP.transform.localScale.z);
+
+        transform.localScale = new Vector3(0.765f, 1.417f, 1f);
     }
 
     private void Start() => SetState(state);

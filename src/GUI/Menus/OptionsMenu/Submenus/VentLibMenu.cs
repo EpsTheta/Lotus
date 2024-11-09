@@ -27,21 +27,34 @@ public class VentLibMenu : MonoBehaviour, IBaseOptionMenuComponent
 
     public VentLibMenu(IntPtr intPtr) : base(intPtr)
     {
-        anchorObject = gameObject.CreateChild("Anchor");
+        anchorObject = gameObject.CreateChild("VentLib");
+        anchorObject.transform.localPosition += new Vector3(2f, 2f);
+        anchorObject.transform.localScale = new Vector3(1f, 1f, 1);
+
         menuTitle = Instantiate(FindObjectOfType<TextMeshPro>(), anchorObject.transform);
         menuTitle.font = CustomOptionContainer.GetGeneralFont();
-        menuTitle.transform.localPosition += new Vector3(0.95f, 1.75f);
+        menuTitle.transform.localPosition = new Vector3(7.58f, -1.85f, 0);
+        menuTitle.name = "MainTitle";
     }
 
+    private void Start()
+    {
+        menuTitle.text = "Networking";
+    }
 
     public void PassMenu(OptionsMenuBehaviour menuBehaviour)
     {
         maxPacketSizeSlider = Instantiate(menuBehaviour.MusicSlider, anchorObject.transform);
-        maxPacketSizeSlider.transform.localScale = new Vector3(1.1f, 1.2f, 1f);
+        maxPacketSizeSlider.transform.localPosition = new Vector3(-3.82f, -0.44f, 0);
+        maxPacketSizeSlider.transform.localScale = new Vector3(1.1f, 1.1f, 1f);
 
         maxPacketSizeLabel = maxPacketSizeSlider.GetComponentInChildren<TextMeshPro>();
-        maxPacketSizeLabel.transform.localPosition += new Vector3(0.7f, 0.25f);
+        maxPacketSizeLabel.transform.localPosition = new Vector3(1.1f, 0.2f, 0);
+        maxPacketSizeLabel.transform.localScale = new Vector3(1.1f, 1.1f, 1f);
+        maxPacketSizeLabel.name = "MaxPacketSize_TMP";
+
         maxPacketSizeValue = Instantiate(maxPacketSizeLabel, maxPacketSizeSlider.transform);
+        maxPacketSizeValue.name = "Value_TMP";
 
         maxPacketSizeValue.transform.localPosition += new Vector3(4f, 0.25f);
         maxPacketSizeSlider.OnValueChange = new UnityEvent();
@@ -50,13 +63,15 @@ public class VentLibMenu : MonoBehaviour, IBaseOptionMenuComponent
             int packetSize = NetworkRules.MaxPacketSize = Mathf.FloorToInt(maxPacketSizeSlider.Value * (NetworkRules.AbsoluteMaxPacketSize - NetworkRules.AbsoluteMinPacketSize)) + NetworkRules.AbsoluteMinPacketSize;
             maxPacketSizeValue.text = packetSize.ToString();
         }));
-        maxPacketSizeSlider.transform.localPosition += new Vector3(0.27f, 0.9f);
 
         GameObject lobbyObject = anchorObject.CreateChild("Lobby Object");
-        allowLobbySending = lobbyObject.AddComponent<MonoToggleButton>();
+        lobbyObject.transform.localPosition = new Vector3(1.04f, -0.328f, -1f);
 
+        allowLobbySending = lobbyObject.AddComponent<MonoToggleButton>();
         allowLobbySendingText = Instantiate(FindObjectOfType<TextMeshPro>(), allowLobbySending.transform);
         allowLobbySendingText.font = CustomOptionContainer.GetGeneralFont();
+        allowLobbySendingText.transform.localPosition = new Vector3(-4.65f, -0.5f, -1);
+        allowLobbySendingText.transform.localScale = new Vector3(2.9f, 1.6f, 1f);
 
         allowLobbySending.SetOnText("ON");
         allowLobbySending.SetOffText("OFF");
@@ -70,18 +85,10 @@ public class VentLibMenu : MonoBehaviour, IBaseOptionMenuComponent
             PrivacyPolicyPatch.EditPrivacyPolicy(PrivacyPolicyEditType.LobbyDiscovery, false);
             NetworkRules.AllowRoomDiscovery = false;
         });
-        allowLobbySendingText.transform.localPosition -= new Vector3(3.5f, 0.5f);
         allowLobbySending.SetState(NetworkRules.AllowRoomDiscovery);
-        lobbyObject.transform.localPosition += new Vector3(2.3f, 1.25f);
 
         anchorObject.SetActive(false);
     }
-
-    private void Start()
-    {
-        menuTitle.text = "Networking";
-    }
-
 
     public void Open()
     {
