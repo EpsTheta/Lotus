@@ -1,22 +1,22 @@
-// Code from : https://github.com/0xDrMoe/TownofHost-Enhanced/blob/15be5ef66a3e08c6c8d53e2d5771ab5a4d51da7e/Modules/DelayNetworkedData.cs
+// from https://github.com/EnhancedNetwork/TownofHost-Enhanced/blob/3676f644e39612b8fe7ea6ddfd0b46a643f08dba/Modules/DelayNetworkedData.cs
+
 using Hazel;
-using InnerNet;
 using System;
-using UnityEngine;
+using InnerNet;
 using HarmonyLib;
-using System.Linq;
+using UnityEngine;
 using System.Collections.Generic;
-using VentLib.Utilities.Extensions;
+using VentLib.Utilities.Harmony.Attributes;
+using System.Linq;
+using VentLib.Utilities;
 
 namespace Lotus.Network;
 
-[HarmonyPatch(typeof(InnerNetClient))]
 public class DelayNetworkedData
 {
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(DelayNetworkedData));
 
-    [HarmonyPatch(typeof(InnerNetClient), nameof(InnerNetClient.SendInitialData))]
-    [HarmonyPrefix]
+    [QuickPrefix(typeof(InnerNetClient), nameof(InnerNetClient.SendInitialData))]
     public static bool SendInitialDataPrefix(InnerNetClient __instance, int clientId)
     {
         if (!Constants.IsVersionModded() || __instance.NetworkMode != NetworkModes.OnlineGame) return true;
@@ -29,7 +29,7 @@ public class DelayNetworkedData
         Il2CppSystem.Collections.Generic.List<InnerNetObject> obj = __instance.allObjects;
         lock (obj)
         {
-            HashSet<GameObject> hashSet = new();
+            HashSet<GameObject> hashSet = [];
             for (int i = 0; i < __instance.allObjects.Count; i++)
             {
                 InnerNetObject innerNetObject = __instance.allObjects[i];
@@ -48,7 +48,7 @@ public class DelayNetworkedData
                 }
             }
             messageWriter.EndMessage();
-            // Logger.Info($"send first data to {clientId}, size is {messageWriter.Length}", "SendInitialDataPrefix");
+            // log.Info($"send first data to {clientId}, size is {messageWriter.Length}", "SendInitialDataPrefix");
             __instance.SendOrDisconnect(messageWriter);
             messageWriter.Recycle();
         }
@@ -59,8 +59,6 @@ public class DelayNetworkedData
     private static void DelaySpawnPlayerInfo(InnerNetClient __instance, int clientId)
     {
         List<NetworkedPlayerInfo> players = GameData.Instance.AllPlayers.ToArray().ToList();
-        //Logging Stuff
-        log.Debug("DelaySpawnPlayerInfo: " + players.Select(p => p.name).StrJoin());
 
         // We send 5 players at a time to prevent too huge packet
         while (players.Count > 0)
@@ -74,6 +72,7 @@ public class DelayNetworkedData
 
             foreach (var player in batch)
             {
+                if (messageWriter.Length > 1600) break;
                 if (player != null && player.ClientId != clientId && !player.Disconnected)
                 {
                     __instance.WriteSpawnMessage(player, player.OwnerId, player.SpawnFlags, messageWriter);
@@ -81,14 +80,13 @@ public class DelayNetworkedData
                 players.Remove(player);
             }
             messageWriter.EndMessage();
-            // Logger.Info($"send delayed network data to {clientId} , size is {messageWriter.Length}", "SendInitialDataPrefix");
+            // log.Info($"send delayed network data to {clientId} , size is {messageWriter.Length}", "SendInitialDataPrefix");
             __instance.SendOrDisconnect(messageWriter);
             messageWriter.Recycle();
         }
     }
 
-    [HarmonyPatch(typeof(InnerNetClient), nameof(InnerNetClient.SendAllStreamedObjects))]
-    [HarmonyPrefix]
+    [QuickPrefix(typeof(InnerNetClient), nameof(InnerNetClient.SendAllStreamedObjects))]
     public static bool SendAllStreamedObjectsPrefix(InnerNetClient __instance, ref bool __result)
     {
         if (!Constants.IsVersionModded() || __instance.NetworkMode != NetworkModes.OnlineGame) return true;
@@ -122,7 +120,7 @@ public class DelayNetworkedData
                     }
                     catch (Exception ex)
                     {
-                        log.Exception(ex + "\nSendAllStreamedObjectsPrefix");
+                        log.Exception(ex);
                         messageWriter.CancelMessage();
                     }
                 }
@@ -143,13 +141,70 @@ public class DelayNetworkedData
         return false;
     }
 
+    [QuickPostfix(typeof(InnerNetClient), nameof(InnerNetClient.Spawn))]
+    public static void Spawn_Postfix(InnerNetClient __instance, InnerNetObject netObjParent, int ownerId = -2, SpawnFlags flags = SpawnFlags.None)
+    {
+        if (!Constants.IsVersionModded() || __instance.NetworkMode != NetworkModes.OnlineGame) return;
+
+        if (__instance.AmHost)
+        {
+            if (netObjParent is NetworkedPlayerInfo playerinfo)
+            {
+                Async.Schedule(() =>
+                {
+                    if (playerinfo != null && AmongUsClient.Instance.AmConnected)
+                    {
+                        var client = AmongUsClient.Instance.GetClient(playerinfo.ClientId);
+                        if (client != null && !IsDisconnected(client))
+                        {
+                            if (playerinfo.IsIncomplete)
+                            {
+                                log.Info($"Disconnecting Client [{client.Id}]{client.PlayerName} {client.FriendCode} for playerinfo timeout", "DelayedNetworkedData");
+                                AmongUsClient.Instance.SendLateRejection(client.Id, DisconnectReasons.ClientTimeout);
+                                __instance.OnPlayerLeft(client, DisconnectReasons.ClientTimeout);
+                            }
+                        }
+                    }
+                }, 5f);
+            }
+
+            if (netObjParent is PlayerControl player)
+            {
+                Async.Schedule(() =>
+                {
+                    if (player != null && !player.notRealPlayer && !player.isDummy && AmongUsClient.Instance.AmConnected)
+                    {
+                        var client = AmongUsClient.Instance.GetClient(player.OwnerId);
+                        if (client != null && !IsDisconnected(client))
+                        {
+                            if (player.Data == null || player.Data.IsIncomplete)
+                            {
+                                log.Info($"Disconnecting Client [{client.Id}]{client.PlayerName} {client.FriendCode} for playercontrol timeout", "DelayedNetworkedData");
+                                AmongUsClient.Instance.SendLateRejection(client.Id, DisconnectReasons.ClientTimeout);
+                                __instance.OnPlayerLeft(client, DisconnectReasons.ClientTimeout);
+                            }
+                        }
+                    }
+                }, 5.5f);
+            }
+        }
+
+        if (!__instance.AmHost)
+        {
+            log.Exception("Tried to spawn while not host:" + (netObjParent?.ToString()));
+        }
+        return;
+    }
+
+
     private static byte timer = 0;
-    [HarmonyPatch(typeof(InnerNetClient), nameof(InnerNetClient.FixedUpdate))]
-    [HarmonyPostfix]
+
+    [QuickPostfix(typeof(InnerNetClient), nameof(InnerNetClient.FixedUpdate))]
     public static void FixedUpdatePostfix(InnerNetClient __instance)
     {
         // Send a networked data pre 2 fixed update should be a good practice?
-        if (!__instance.AmHost || __instance.Streams == null || __instance.NetworkMode != NetworkModes.OnlineGame) return;
+        if (!Constants.IsVersionModded() || __instance.NetworkMode != NetworkModes.OnlineGame) return;
+        if (!__instance.AmHost || __instance.Streams == null) return;
 
         if (timer == 0)
         {
@@ -184,14 +239,40 @@ public class DelayNetworkedData
             }
             catch (Exception ex)
             {
-                log.Exception(ex + "\nFixedUpdatePostfix");
+                log.Exception(ex);
                 messageWriter.CancelMessage();
                 player.ClearDirtyBits();
             }
         }
     }
-}
 
+    // [QuickPrefix(typeof(InnerNetClient), nameof(InnerNetClient.SendOrDisconnect))]
+    // public static void SendOrDisconnectPatch(InnerNetClient __instance, MessageWriter msg)
+    // {
+    //     if (DebugModeManager.IsDebugMode)
+    //     {
+    //         log.Info($"Packet({msg.Length}), SendOption:{msg.SendOption}", "SendOrDisconnectPatch");
+    //     }
+    //     else if (msg.Length > 1000)
+    //     {
+    //         log.Info($"Large Packet({msg.Length})", "SendOrDisconnectPatch");
+    //     }
+    // }
+    private static bool IsDisconnected(ClientData client)
+    {
+        var __instance = AmongUsClient.Instance;
+        for (int i = 0; i < __instance.allClients.Count; i++)
+        {
+            ClientData clientData = __instance.allClients[i];
+            if (clientData.Id == client.Id)
+            {
+                return true;
+            }
+        }
+        return false;
+        //When a client disconnects, it is removed from allClients in method amongusclient.removeplayer
+    }
+}
 [HarmonyPatch(typeof(GameData), nameof(GameData.DirtyAllData))]
 internal class DirtyAllDataPatch
 {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Il2CppInterop.Runtime.InteropTypes;
+using UnityEngine;
 
 namespace Lotus.Extensions;
 
@@ -13,5 +14,26 @@ public static class ObjectExtensions
     {
         casted = obj.TryCast<T>()!;
         return casted != null;
+    }
+
+    public static bool HasParentInHierarchy(this GameObject obj, string parentPath)
+    {
+        string[] pathParts = parentPath.Split('/');
+        int pathIndex = pathParts.Length - 1;
+
+        Transform current = obj.transform;
+
+        while (current != null)
+        {
+            if (current.name == pathParts[pathIndex])
+            {
+                pathIndex--;
+                if (pathIndex < 0) return true;
+            }
+            else pathIndex = pathParts.Length - 1;
+            current = current.parent;
+        }
+
+        return false;
     }
 }

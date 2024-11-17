@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Lotus.API.Odyssey;
+using Lotus.API.Player;
 using Lotus.Extensions;
 using Lotus.Utilities;
 using VentLib.Networking.RPC;
@@ -14,7 +15,7 @@ public static class AntiBlackoutLogic
 {
     private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(AntiBlackoutLogic));
 
-    public static HashSet<byte> PatchedData(byte exiledPlayer)
+    public static HashSet<byte> PatchedDataLegacy(byte exiledPlayer)
     {
         log.Debug("Patching GameData", "AntiBlackout");
         IEnumerable<PlayerControl> players = PlayerControl.AllPlayerControls.ToArray().Sorted(p => p.IsHost());
@@ -77,6 +78,51 @@ public static class AntiBlackoutLogic
         }
 
         return unpatchable;
+    }
+
+    public static Dictionary<byte, (bool isDead, bool isDisconnected)> PatchedData(PlayerControl curPlayer, byte exiledPlayer)
+    {
+        log.Debug($"Patching GameData ({curPlayer.name}) ({curPlayer.PrimaryRole().RoleName})");
+        Dictionary<byte, (bool isDead, bool isDisconnected)> replacedPlayers = new();
+
+        if (curPlayer.IsHost() || curPlayer.IsModded()) return replacedPlayers;
+
+        VanillaRoleTracker.TeamInfo myTeamInfo = curPlayer.GetTeamInfo();
+        IEnumerable<PlayerControl> allPlayers = Players.GetAllPlayers();
+        HashSet<byte> impostorIds = myTeamInfo.Impostors.Where(id => exiledPlayer != id && id != 0).ToHashSet();
+        HashSet<byte> crewIds = myTeamInfo.Crewmates.Where(id => exiledPlayer != id).ToHashSet();
+
+        List<PlayerControl> aliveImpostors = allPlayers.Where(p => impostorIds.Contains(p.PlayerId) && p.IsAlive()).ToList();
+        List<PlayerControl> aliveCrewmates = allPlayers.Where(p => crewIds.Contains(p.PlayerId) && p.IsAlive()).ToList();
+
+        bool isCurPlayerImpostor = curPlayer.GetVanillaRole().IsImpostor();
+        if (curPlayer.PlayerId != exiledPlayer && curPlayer.IsAlive())
+        {
+            if (isCurPlayerImpostor) aliveImpostors.Add(curPlayer);
+            else aliveCrewmates.Add(curPlayer);
+        }
+
+        bool isBlackScreenLikely = aliveImpostors.Count >= aliveCrewmates.Count || aliveImpostors.Count == 0;
+        if (!isBlackScreenLikely) return replacedPlayers;
+
+        if (aliveImpostors.Count == 0 && impostorIds.Count > 0)
+        {
+            PlayerControl firstImpostor = allPlayers.First(p => impostorIds.Contains(p.PlayerId));
+            aliveImpostors.Add(firstImpostor);
+            replacedPlayers[firstImpostor.PlayerId] = (false, false);
+        }
+
+        while (aliveImpostors.Count >= aliveCrewmates.Count)
+        {
+            var leftoverCrewmates = allPlayers.Where(p => crewIds.Contains(p.PlayerId) && !aliveCrewmates.Contains(p));
+            if (!leftoverCrewmates.Any()) break;
+
+            PlayerControl randomCrewmate = leftoverCrewmates.First();
+            aliveCrewmates.Add(randomCrewmate);
+            replacedPlayers[randomCrewmate.PlayerId] = (false, false);
+        }
+
+        return replacedPlayers;
     }
 
     private static void ReviveEveryone(byte exiledPlayer)

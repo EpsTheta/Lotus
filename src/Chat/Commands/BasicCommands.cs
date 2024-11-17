@@ -220,7 +220,7 @@ public class BasicCommands : CommandTranslations
 
         PlayerControl? player = Players.FindPlayerById(id);
         if (player == null) ChatHandler.Of(PlayerNotFoundText.Formatted(id), CommandError).LeftAlign().Send(source);
-        else if (!BlackscreenResolver.PerformForcedReset(player)) ChatHandler.Of("Unable to perform forced Blackscreen Fix. No players have died yet.", CommandError).LeftAlign().Send(source);
+        else if (!LegacyResolver.PerformForcedReset(player)) ChatHandler.Of("Unable to perform forced Blackscreen Fix. No players have died yet.", CommandError).LeftAlign().Send(source);
         else ChatHandler.Of($"Successfully cleared blackscreen of \"{player.name}\"").LeftAlign().Send(source);
     }
 }

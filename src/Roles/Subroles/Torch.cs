@@ -30,9 +30,9 @@ public class Torch : Subrole
         Async.Schedule(SyncOptions, handle.ActionType is LotusActionType.SabotageStarted ? 1f : 0.2f);
     }
 
-    public override HashSet<IFaction> RegulatedFactions() => ImpostorFaction;
+    public override HashSet<IFaction> RegulatedFactions() => FactionRestrictions.Count > 0 ? FactionRestrictions : ImpostorFaction;
 
-    public override CompatabilityMode FactionCompatabilityMode => CompatabilityMode.Blacklisted;
+    // public override CompatabilityMode FactionCompatabilityMode => FactionRestrictions.Count > 0 ? CompatabilityMode.Whitelisted : CompatabilityMode.Blacklisted;
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) => AddRestrictToCrew(base.RegisterOptions(optionStream));
 

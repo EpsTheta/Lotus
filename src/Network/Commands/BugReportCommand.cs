@@ -54,6 +54,7 @@ public class BugReportCommand : ICommandReceiver
         if (!source.IsHost())
         {
             ChatHandler.Of(ReportSuggest.Formatted(source.name, message)).Send(PlayerControl.LocalPlayer);
+            reportingPlayerIds.Remove(source.PlayerId);
             yield break;
         }
         bool flag = PrivacyPolicyInfo.Instance != null && PrivacyPolicyInfo.Instance.AnonymousBugReports;

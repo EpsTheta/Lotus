@@ -22,7 +22,7 @@ namespace Lotus.Managers.Blackscreen;
 
 internal class LegacyResolver : IBlackscreenResolver
 {
-    private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(BlackscreenResolver));
+    private static readonly StandardLogger log = LoggerFactory.GetLogger<StandardLogger>(typeof(LegacyResolver));
 
     private byte resetCameraPlayer = byte.MaxValue;
     private Vector2 resetCameraPosition;
@@ -30,7 +30,7 @@ internal class LegacyResolver : IBlackscreenResolver
     private Dictionary<byte, (bool isDead, bool isDisconnected)> playerStates = null!;
     private HashSet<byte> unpatchable;
 
-    public bool Patching;
+    private bool _patching;
 
     private LegacyResolver(byte blackscreened)
     {
@@ -42,7 +42,7 @@ internal class LegacyResolver : IBlackscreenResolver
         this.meetingDelegate = meetingDelegate;
         resetCameraPlayer = Players.GetPlayers(PlayerFilter.Dead).FirstOrOptional().Map(p => p.PlayerId).OrElse(byte.MaxValue);
         Hooks.PlayerHooks.PlayerMessageHook.Bind(nameof(BlackscreenResolver), _ => BlockLavaChat(), true);
-        Hooks.GameStateHooks.GameEndHook.Bind(nameof(BlackscreenResolver), _ => Patching = false, true);
+        Hooks.GameStateHooks.GameEndHook.Bind(nameof(BlackscreenResolver), _ => _patching = false, true);
     }
 
     public static bool PerformForcedReset(PlayerControl player)
@@ -55,7 +55,7 @@ internal class LegacyResolver : IBlackscreenResolver
         return true;
     }
 
-    public void OnMeetingEnd()
+    public virtual void OnMeetingDestroy()
     {
         if (!AmongUsClient.Instance.AmHost) return;
         unpatchable = StoreAndSendFallbackData();
@@ -65,11 +65,11 @@ internal class LegacyResolver : IBlackscreenResolver
         else log.Fatal("Could not find dead player to patch every player.");
     }
 
-    public void FixBlackscreens(Action callback)
+    public virtual void FixBlackscreens(Action runOnFinish)
     {
         if (!AmongUsClient.Instance.AmHost) return;
         float deferredTime = 0; // Used if needing to teleport the player
-        Async.Schedule(() => ProcessPatched(callback), NetUtils.DeriveDelay(0.9f));
+        Async.Schedule(() => ProcessPatched(runOnFinish), NetUtils.DeriveDelay(0.9f));
         if (unpatchable.Count == 0) return;
 
         bool updated = !TryGetDeadPlayer(out PlayerControl? deadPlayer);
@@ -84,6 +84,8 @@ internal class LegacyResolver : IBlackscreenResolver
         log.Debug($"Resetting player cameras using \"{deadPlayer?.name ?? "(themselves)"}\" as camera player");
         Async.Schedule(() => PerformCameraReset(deadPlayer), deferredTime);
     }
+
+    public virtual bool Patching() => _patching;
 
     private void PerformCameraReset(PlayerControl deadPlayer)
     {
@@ -103,7 +105,7 @@ internal class LegacyResolver : IBlackscreenResolver
 
     private HashSet<byte> StoreAndSendFallbackData()
     {
-        Patching = true;
+        _patching = true;
         byte exiledPlayer = meetingDelegate.ExiledPlayer?.PlayerId ?? byte.MaxValue;
         NetworkedPlayerInfo[] playerInfos = GameData.Instance.AllPlayers.ToArray().Where(p => p != null).ToArray();
         playerInfos.FirstOrOptional(p => p.PlayerId == exiledPlayer).IfPresent(info => info.IsDead = true);
@@ -114,7 +116,7 @@ internal class LegacyResolver : IBlackscreenResolver
         return unpatchablePlayers;
     }
 
-    private void ProcessPatched(Action callback)
+    private void ProcessPatched(Action runOnFinish)
     {
         GameData.Instance.AllPlayers.ToArray().Where(i => i != null).ForEach(info =>
         {
@@ -127,10 +129,10 @@ internal class LegacyResolver : IBlackscreenResolver
             }
             catch { }
         });
-        Patching = false;
+        _patching = false;
         GeneralRPC.SendGameData();
         CheckEndGamePatch.Deferred = false;
-        callback();
+        runOnFinish();
     }
 
     private bool TryGetDeadPlayer(out PlayerControl? deadPlayer)
@@ -172,7 +174,7 @@ internal class LegacyResolver : IBlackscreenResolver
     {
         DevLogger.GameInfo();
         HostRpc.RpcDebug("Game Data BEFORE Patch");
-        HashSet<byte> unpatchable = AntiBlackoutLogic.PatchedData(exiledPlayer);
+        HashSet<byte> unpatchable = AntiBlackoutLogic.PatchedDataLegacy(exiledPlayer);
         HostRpc.RpcDebug("Game Data AFTER Patch");
         return unpatchable;
     }
@@ -197,10 +199,10 @@ internal class LegacyResolver : IBlackscreenResolver
 
     private void BlockLavaChat()
     {
-        if (!Patching) return;
+        if (!_patching) return;
         if (Game.State is GameState.InLobby)
         {
-            Patching = false;
+            _patching = false;
             return;
         }
         ChatHandler chatHandler = ChatHandler.Of("", "- Lava Chat Fix -");

@@ -33,6 +33,8 @@ using System;
 using Lotus.Managers.Blackscreen.Interfaces;
 using Lotus.Managers.Blackscreen;
 using Lotus.API.Vanilla.Meetings;
+using VentLib.Lobbies;
+using Lotus.Network;
 #if !DEBUG
 using VentLib.Utilities.Debug.Profiling;
 #endif
@@ -53,7 +55,7 @@ public class ProjectLotus : BasePlugin, IGitVersionEmitter
     public const string MajorVersion = "1";
     public const string MinorVersion = "1"; // Update with each release
     public const string PatchVersion = "0";
-    public const string BuildNumber = "1948";
+    public const string BuildNumber = "1978";
 
     public static string PluginVersion = typeof(ProjectLotus).Assembly.GetName().Version!.ToString();
 
@@ -61,7 +63,7 @@ public class ProjectLotus : BasePlugin, IGitVersionEmitter
 
     public static readonly string ModName = "Project Lotus";
     public static readonly string ModColor = "#4FF918";
-    public static readonly string DevVersionStr = "Dev November 6 2024";
+    public static readonly string DevVersionStr = "Dev November 9 2024";
 
     public static bool DevVersion = false;
 
@@ -114,7 +116,7 @@ public class ProjectLotus : BasePlugin, IGitVersionEmitter
 
     public void SetBlackscreenResolver(Func<MeetingDelegate, IBlackscreenResolver> newResolver)
     {
-        log.Debug($"{Assembly.GetCallingAssembly().GetName().Name} overrided the default blackscreen resolver.");
+        log.Debug($"{Assembly.GetCallingAssembly().GetName().Name} overrided the current blackscreen resolver.");
         GetNewBlackscreenResolver = newResolver;
     }
 
@@ -148,6 +150,7 @@ public class ProjectLotus : BasePlugin, IGitVersionEmitter
             () => AssetLoader.LoadLotusSprite("searchicon.png", 100, true),
             greenOnHover: false
         ));
+        LobbyChecker.AddEndpoint(new LotusLobbyEndpoints(), false); // do not replace all, so default endpoint is still sent.
 
         FinishedLoading = true;
         log.High("Finished Initializing Project Lotus. Sending Post-Initialization Event");
