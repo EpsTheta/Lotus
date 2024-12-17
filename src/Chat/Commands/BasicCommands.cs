@@ -209,9 +209,10 @@ public class BasicCommands : CommandTranslations
         ChatHandler.Of("Successfully reloaded titles.").Send(source);
     }
 
-    [Command(CommandFlag.HostOnly | CommandFlag.InGameOnly, "fix")]
+    [Command(CommandFlag.InGameOnly, "fix")]
     public static void FixPlayer(PlayerControl source, CommandContext context, byte id)
     {
+        if (ModCommands.CheckPlayer(source, context, out int targetPlayerId, checkArgs: false, checkType: ModCommands.CheckType.AdminsAndAbove) == -1) return;
         if (context.Args.Length == 0)
         {
             PlayerIds(source, context);

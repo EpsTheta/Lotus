@@ -40,7 +40,7 @@ public class ModCommands : ICommandReceiver
                 break;
         }
     }
-    private static int CheckPlayer(PlayerControl source, CommandContext context, out int targetPlayerId, bool checkArgs = true, CheckType checkType = CheckType.ModsAndAbove)
+    public static int CheckPlayer(PlayerControl source, CommandContext context, out int targetPlayerId, bool checkArgs = true, CheckType checkType = CheckType.ModsAndAbove)
     {
         bool permitted = checkType switch
         {
@@ -146,7 +146,7 @@ public class ModCommands : ICommandReceiver
         GameStartManager.Instance.countDownTimer = 0.0001f;
     }
 
-    private enum CheckType
+    public enum CheckType
     {
         ModsAndAbove,
         AdminsAndAbove,
