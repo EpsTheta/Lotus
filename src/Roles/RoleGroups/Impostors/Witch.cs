@@ -96,6 +96,14 @@ public class Witch : Vanilla.Impostor
         }
     }
 
+    [RoleAction(LotusActionType.PlayerDeath)]
+    private void onWitchDeath(PlayerControl killer)
+    {
+        cursedPlayers.Clear();
+        indicators.ForEach(i => i.Value.Delete());
+        indicators.Clear();
+    }
+
 
 
     protected override GameOptionBuilder RegisterOptions(GameOptionBuilder optionStream) =>
