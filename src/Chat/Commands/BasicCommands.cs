@@ -145,7 +145,7 @@ public class BasicCommands : CommandTranslations
         } // assign a random color
         else color = UnityEngine.Random.RandomRangeInt(0, Palette.PlayerColors.Length - 1);
 
-        if (color > Palette.PlayerColors.Length - 1)
+        if (color > Palette.PlayerColors.Length - 1 | color < 0)
         {
             ChatHandler.Of($"{ColorNotInRangeMessage.Formatted(color)} (0-{Palette.PlayerColors.Length - 1})", ModConstants.Palette.InvalidUsage.Colorize(InvalidUsage)).LeftAlign().Send(source);
             return;

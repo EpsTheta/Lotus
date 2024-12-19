@@ -82,6 +82,7 @@ public class Oracle : Crewmate
     {
         if (!selectedPlayer.Exists()) return;
         PlayerControl target = Utils.GetPlayerById(selectedPlayer.Get())!;
+        if (target == null) return; // If the target no longer exists.
         target.NameModel().GetComponentHolder<RoleHolder>().LastOrDefault(c => c.ViewMode() is ViewMode.Replace)?.SetViewerSupplier(() => Players.GetAllPlayers().ToList());
 
         string roleName = _oracleGradient.Apply(target.PrimaryRole().RoleName);

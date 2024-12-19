@@ -6,6 +6,7 @@ using VentLib.Options.UI;
 using VentLib.Options.IO;
 using VentLib.Utilities;
 using VentLib.Utilities.Extensions;
+using Lotus.Extensions;
 
 namespace Lotus.Options.Client;
 
@@ -24,18 +25,28 @@ public class VideoOptions
             _targetFps = value;
         }
     }
+    public bool ChatDarkMode
+    {
+        get => _darkMode;
+        set
+        {
+            darkOption.SetValue(value ? 1 : 0);
+            _darkMode = value;
+        }
+    }
 
     private int _targetFps;
+    private bool _darkMode;
 
     private GameOption fpsOption;
+    private GameOption darkOption;
 
     public VideoOptions()
     {
         OptionManager optionManager = OptionManager.GetManager();
         fpsOption = new GameOptionBuilder()
             .Values(2, FpsLimits)
-            .Key("Max Framerate")
-            .Name("Max Framerate")
+            .KeyName("Max Framerate", "Max Framerate")
             .Description("Maximum Framerate for the Application")
             .IOSettings(s => s.UnknownValueAction = ADEAnswer.Allow)
             .BindInt(i =>
@@ -45,7 +56,17 @@ public class VideoOptions
                 Async.Schedule(() => Application.targetFrameRate = _targetFps, 1f);
             })
             .BuildAndRegister();
+
+        object[] themeValues = { false, true };
+        darkOption = new GameOptionBuilder()
+            .Values(0, themeValues)
+            .KeyName("Dark Mode", "Dark Mode")
+            .Description("Maximum Framerate for the Application")
+            .IOSettings(s => s.UnknownValueAction = ADEAnswer.Allow)
+            .BindBool(b =>
+            {
+                optionManager.DelaySave(0);
+            })
+            .BuildAndRegister();
     }
-
-
 }

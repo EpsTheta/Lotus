@@ -56,7 +56,7 @@ public class Vulture : CustomRole
     [RoleAction(LotusActionType.ReportBody)]
     private void EatBody(Optional<NetworkedPlayerInfo> body, ActionHandle handle)
     {
-        if (!body.Exists()) return;
+        if (!body.Exists() || !isEatMode) return;
         Game.MatchData.UnreportableBodies.Add(body.Get().PlayerId);
 
         if (++bodyCount >= bodyAmount) ManualWin.Activate(MyPlayer, ReasonType.RoleSpecificWin, 100);

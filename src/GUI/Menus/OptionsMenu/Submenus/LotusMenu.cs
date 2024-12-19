@@ -7,6 +7,7 @@ using Lotus.GUI.Menus.OptionsMenu.Components;
 using Lotus.Network.PrivacyPolicy.Patches;
 using Lotus.Network.PrivacyPolicy;
 using VentLib.Utilities;
+using Lotus.Options;
 
 namespace Lotus.GUI.Menus.OptionsMenu.Submenus;
 
@@ -19,6 +20,8 @@ public class LotusMenu : MonoBehaviour, IBaseOptionMenuComponent
     private MonoToggleButton privacyPolicyLink;
     private MonoToggleButton connectWithAPI;
     private MonoToggleButton anonymousBugReports;
+
+    private MonoToggleButton chatDarkMode;
 
     public LotusMenu(IntPtr intPtr) : base(intPtr)
     {
@@ -89,6 +92,17 @@ public class LotusMenu : MonoBehaviour, IBaseOptionMenuComponent
         });
         connectWithAPI.SetState(PrivacyPolicyInfo.Instance.ConnectWithAPI);
         connectAPIObject.transform.localPosition = new Vector3(0.029f, 0.353f, -1);
+
+        GameObject darkModeObject = new("Chat Dark Mode");
+        darkModeObject.transform.SetParent(anchorObject.transform);
+        darkModeObject.transform.localScale = Vector3.one;
+        chatDarkMode = darkModeObject.AddComponent<MonoToggleButton>();
+        chatDarkMode.SetOnText("Dark Mode: ON");
+        chatDarkMode.SetOffText("Dark Mode: OFF");
+        chatDarkMode.SetToggleOnAction(() => ClientOptions.VideoOptions.ChatDarkMode = true);
+        chatDarkMode.SetToggleOffAction(() => ClientOptions.VideoOptions.ChatDarkMode = false);
+        chatDarkMode.SetState(ClientOptions.VideoOptions.ChatDarkMode);
+        chatDarkMode.transform.localPosition = new Vector3(-1.995f, -0.328f, -1f);
 
         /// Done
         anchorObject.SetActive(false);

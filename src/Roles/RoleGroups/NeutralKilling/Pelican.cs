@@ -103,7 +103,7 @@ public class Pelican : NeutralKillingBase
         Utils.Teleport(target.NetTransform, MyPlayer.GetTruePosition());
     }
 
-    [RoleAction(LotusActionType.ReportBody, ActionFlag.GlobalDetector, priority: API.Priority.Low)]
+    [RoleAction(LotusActionType.RoundEnd)]
     public void KillGulpedPlayers()
     {
         gulpedPlayers.Keys.Filter(Players.PlayerById).Where(p => p.IsAlive()).ForEach(p =>

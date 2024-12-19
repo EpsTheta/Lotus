@@ -76,8 +76,8 @@ public class Transporter : Crewmate
         if (target2.IsAlive())
             Utils.Teleport(target2.NetTransform, new Vector2(player1Position.x, player1Position.y + 0.3636f));
 
-        target1.InteractWith(target2, new TransportInteraction(target1));
-        target2.InteractWith(target1, new TransportInteraction(target2));
+        target1.InteractWith(target2, new TransportInteraction(target1, MyPlayer));
+        target2.InteractWith(target1, new TransportInteraction(target2, MyPlayer));
 
         target1.moveable = true;
         target2.moveable = true;
@@ -130,7 +130,8 @@ public class Transporter : Crewmate
 
     public class TransportInteraction : LotusInteraction
     {
-        public TransportInteraction(PlayerControl actor) : base(new NeutralIntent(), actor.PrimaryRole()) { }
+        public PlayerControl transporter;
+        public TransportInteraction(PlayerControl actor, PlayerControl transporter) : base(new NeutralIntent(), actor.PrimaryRole()) { this.transporter = transporter; }
     }
 
     [Localized(nameof(Transporter))]

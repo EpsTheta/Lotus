@@ -63,7 +63,7 @@ public class Sniper : Shapeshifter
         // DevLogger.Log($"Target Position: {targetPosition}");
         int kills = 0;
 
-        foreach (PlayerControl target in Players.GetAllPlayers().Where(p => p.PlayerId != MyPlayer.PlayerId && p.Relationship(MyPlayer) is not Relation.FullAllies))
+        foreach (PlayerControl target in Players.GetAlivePlayers().Where(p => p.PlayerId != MyPlayer.PlayerId && p.Relationship(MyPlayer) is not Relation.FullAllies))
         {
             DevLogger.Log(target.name);
             Vector3 targetPos = target.transform.position - (Vector3)MyPlayer.GetTruePosition();
