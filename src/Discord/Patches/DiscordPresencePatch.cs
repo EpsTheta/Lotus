@@ -14,12 +14,12 @@ public class DiscordPatch
 
     public static void Prefix(ref Activity activity)
     {
-        var DiscordMessage = "Project: Lotus v" + (ProjectLotus.DevVersion ? ProjectLotus.VisibleVersion + "." + ProjectLotus.BuildNumber : "v" + ProjectLotus.VisibleVersion);
+        var trueActivityState = "";
+        var DiscordMessage = "Project: Lotus v" + (ProjectLotus.DevVersion ? $"{ProjectLotus.VisibleVersion}.{ProjectLotus.BuildNumber}" : ProjectLotus.VisibleVersion); // if i use devversionstr then code will go off screen
         activity.Details = DiscordMessage;
-
         if (DataManager.Settings.Gameplay.StreamerMode) return;
 
-        if (activity.State != "In Menus")
+        if (activity.State is not "In Menus" and not "In Freeplay")
         {
             gameCode = GameCode.IntToGameName(AmongUsClient.Instance.GameId);
             gameRegion = ServerManager.Instance.CurrentRegion.Name;
@@ -28,7 +28,7 @@ public class DiscordPatch
 
             if (gameCode != "" && gameRegion != "")
             {
-                string stateMessage = "";
+                var stateMessage = "";
                 string currentMap = GameManager.Instance.LogicOptions.MapId switch
                 {
                     0 => "The Skeld",
@@ -36,21 +36,25 @@ public class DiscordPatch
                     2 => "Polus",
                     4 => "Airship",
                     5 => "The Fungle",
+                    6 => "Submerged",
                     _ => "An Unknown Map"
                 };
 
-                stateMessage = Game.State switch
+                stateMessage = Game.State switch // only updates on inintro, and inlobby.
                 {
                     GameState.None => "(Idle)",
-                    GameState.InIntro => $"(Roaming {currentMap})", // same as roaming since it got stuck on inintro
+                    GameState.InIntro => $"(Roaming {currentMap})",
                     GameState.InMeeting => "(In Meeting)",
-                    GameState.InLobby => "", // presence already has stuff for when in lobby
+                    GameState.InLobby => "Waiting in Lobby",
                     GameState.Roaming => $"(Roaming {currentMap})",
-                    _ => "Unknown State",
+                    _ => "(Idle)",
                 };
-                DiscordMessage = "Project: Lotus v" + (ProjectLotus.DevVersion ? ProjectLotus.VisibleVersion + "." + ProjectLotus.BuildNumber : "v" + ProjectLotus.VisibleVersion) + $" - ({gameCode}) | ({gameRegion}) • {stateMessage}";
+                if (Game.State == GameState.InIntro) stateMessage += $"({GameData.Instance.PlayerCount}/{GameManager.Instance.LogicOptions.MaxPlayers})";
+                DiscordMessage = "Lotus v" + (ProjectLotus.DevVersion ? ProjectLotus.VisibleVersion + ".2073" : "v" + ProjectLotus.VisibleVersion) + $" - ({gameCode}) | ({gameRegion})";
+                trueActivityState = stateMessage;
             }
         }
         activity.Details = DiscordMessage;
+        activity.State = trueActivityState;
     }
 }
