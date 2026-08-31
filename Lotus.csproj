@@ -37,7 +37,7 @@
 
 
   <ItemGroup>
-    <PackageReference Include="AmongUs.GameLibs.Steam" Version="2026.3.31" PrivateAssets="all" />
+      <PackageReference Include="AmongUs.GameLibs.Android" Version="2026.8.18" />
 		<PackageReference Include="BepInEx.IL2CPP.MSBuild" Version="2.1.0-rc.1">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -81,10 +81,7 @@
     <EmbeddedResource Include=".\assets\projectlotus_bundle-win" />
     <EmbeddedResource Include=".\assets\projectlotus_bundle-android" />
   </ItemGroup>
-  
-  <ItemGroup>
-    <ProjectReference Condition="$(Platform)=='AnyCPU'" Include="./SourceGenerators/RoleEditorGenerator/src/RoleEditorGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-  </ItemGroup>
+    
     
   <ItemGroup>
     <None Remove="./SourceGenerators/**/*" />

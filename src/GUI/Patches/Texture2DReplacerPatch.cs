@@ -25,12 +25,15 @@ public class Texture2DReplacerPatch
 
     public static void CheckForTextures()
     {
+
         Resources.FindObjectsOfTypeAll(Il2CppType.Of<Texture2D>())
             .ForEach(obj =>
             {
                 if (!obj.TryCast<Texture2D>(out var texture)) return;
                 if (texture == null) return;
                 if (!ReplacedGraphics.Contains(texture.name)) return;
+
+                if (texture.name is "Online_EnterCode_CreateLobby" or "UiButtons") return;
 
                 Sprite spriteTexture = LotusAssets.LoadAsset<Sprite>(StartPath + texture.name + ".png");
                 if (spriteTexture == null || spriteTexture.texture == null) return;

@@ -70,7 +70,7 @@ public class ProjectLotus : BasePlugin, IGitVersionEmitter
 
     public static readonly string ModName = "Project Lotus";
     public static readonly string ModColor = "#4FF918";
-    public static readonly string DevVersionStr = "Dev April 11 2026";
+    public static readonly string DevVersionStr = "Unofficial Dev August 25th 2026";
 
     public static bool DevVersion { get; } =
 #if DEBUG
@@ -119,7 +119,7 @@ public class ProjectLotus : BasePlugin, IGitVersionEmitter
             ModUpdateMenu.AddUpdateItem("VentFrameworkContinued", null, ex => ModUpdater.Update(ventAssembly, ex)!);
     }
 
-    public static NormalGameOptionsV10 NormalOptions => GameOptionsManager.Instance.currentNormalGameOptions;
+    public static NormalGameOptionsV11 NormalOptions => GameOptionsManager.Instance.currentNormalGameOptions;
 
     public static GameModeManager GameModeManager = null!;
     public static List<byte> ResetCamPlayerList = null!;

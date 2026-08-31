@@ -52,6 +52,8 @@ class IntroDestroyPatch
         if (!AmongUsClient.Instance.AmHost)
         {
             Game.State = GameState.Roaming;
+
+            if (MatchInfoGuide.Instance != null && HudManager.InstanceExists) HudManager.Instance.MatchInfoButton.gameObject.SetActive(false);
             return;
         }
 
@@ -76,6 +78,8 @@ class IntroDestroyPatch
         Profiler.Sample propSample = Global.Sampler.Sampled("Propagation Sample");
         RoleOperations.Current.TriggerForAll(LotusActionType.RoundStart, null, true);
         propSample.Stop();
+
+
 
         Hooks.GameStateHooks.RoundStartHook.Propagate(new GameStateHookEvent(Game.MatchData, ProjectLotus.GameModeManager.CurrentGameMode));
         destroySample.Stop();
