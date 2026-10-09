@@ -23,10 +23,10 @@ public static class RolesSettingsMenuPatch
         }
     }
 }
-[HarmonyPatch(typeof(NormalGameOptionsV11), nameof(NormalGameOptionsV11.SetRecommendations), typeof(int), typeof(bool), typeof(RulesPresets))]
+[HarmonyPatch(typeof(NormalGameOptionsV12), nameof(NormalGameOptionsV12.SetRecommendations), typeof(int), typeof(bool), typeof(RulesPresets))]
 public static class SetRecommendationsPatch
 {
-    public static bool Prefix(NormalGameOptionsV11 __instance, int numPlayers, bool isOnline, RulesPresets rulesPresets)
+    public static bool Prefix(NormalGameOptionsV12 __instance, int numPlayers, bool isOnline, RulesPresets rulesPresets)
     {
         numPlayers = Mathf.Clamp(numPlayers, 4, ModConstants.MaxPlayers);
         __instance.PlayerSpeedMod = __instance.MapId == 4 ? 1.25f : 1f; //AirShipなら1.25、それ以外は1
@@ -38,7 +38,7 @@ public static class SetRecommendationsPatch
         __instance.NumShortTasks = 6;
         __instance.NumEmergencyMeetings = 1;
         if (!isOnline)
-            __instance.NumImpostors = NormalGameOptionsV11.RecommendedImpostors[numPlayers];
+            __instance.NumImpostors = NormalGameOptionsV12.RecommendedImpostors[numPlayers];
         __instance.KillDistance = 0;
         __instance.DiscussionTime = 0;
         __instance.VotingTime = 150;
@@ -49,15 +49,19 @@ public static class SetRecommendationsPatch
         __instance.roleOptions.SetRoleRate(RoleTypes.Shapeshifter, 0, 0);
         __instance.roleOptions.SetRoleRate(RoleTypes.Scientist, 0, 0);
         __instance.roleOptions.SetRoleRate(RoleTypes.GuardianAngel, 0, 0);
+        __instance.roleOptions.SetRoleRate(RoleTypes.SpiritGuide, 0, 0);
         __instance.roleOptions.SetRoleRate(RoleTypes.Engineer, 0, 0);
         __instance.roleOptions.SetRoleRate(RoleTypes.Tracker, 0, 0);
+        __instance.roleOptions.SetRoleRate(RoleTypes.Judge, 0, 0);
         __instance.roleOptions.SetRoleRate(RoleTypes.Phantom, 0, 0);
         __instance.roleOptions.SetRoleRate(RoleTypes.Noisemaker, 0, 0);
         __instance.roleOptions.SetRoleRecommended(RoleTypes.Shapeshifter);
         __instance.roleOptions.SetRoleRecommended(RoleTypes.Scientist);
         __instance.roleOptions.SetRoleRecommended(RoleTypes.GuardianAngel);
+        __instance.roleOptions.SetRoleRecommended(RoleTypes.SpiritGuide);
         __instance.roleOptions.SetRoleRecommended(RoleTypes.Engineer);
         __instance.roleOptions.SetRoleRecommended(RoleTypes.Tracker);
+        __instance.roleOptions.SetRoleRecommended(RoleTypes.Judge);
         __instance.roleOptions.SetRoleRecommended(RoleTypes.Phantom);
         __instance.roleOptions.SetRoleRecommended(RoleTypes.Noisemaker);
 
@@ -87,10 +91,10 @@ public static class SetRecommendationsPatch
     }
 }
 
-[HarmonyPatch(typeof(NormalGameOptionsV11), nameof(NormalGameOptionsV11.SetRecommendations), typeof(int), typeof(bool))]
+[HarmonyPatch(typeof(NormalGameOptionsV12), nameof(NormalGameOptionsV12.SetRecommendations), typeof(int), typeof(bool))]
 class NoRulesRecommendationPatch
 {
-    public static bool Prefix(NormalGameOptionsV11 __instance, int numPlayers, bool isOnline)
+    public static bool Prefix(NormalGameOptionsV12 __instance, int numPlayers, bool isOnline)
     {
         return SetRecommendationsPatch.Prefix(__instance, numPlayers, isOnline, RulesPresets.Standard);
     }

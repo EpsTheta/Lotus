@@ -59,6 +59,7 @@ class GameJoinPatch
         {
             if (GeneralOptions.AdminOptions.AutoStartMaxTime != -1 && GeneralOptions.AdminOptions.AutoStartEnabled && GameStartManager.Instance.countDownTimer <= 0)
             {
+                log.Warn("Autostarting game due to AutoStartMaxTime being set and AutoStartEnabled being true.", "GameJoin");
                 GameStartManager.Instance.BeginGame();
                 float timeRemaining = GeneralOptions.AdminOptions.AutoCooldown.TimeRemaining();
                 GameStartManager.Instance.countDownTimer = timeRemaining;

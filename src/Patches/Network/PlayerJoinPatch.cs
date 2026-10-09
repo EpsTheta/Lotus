@@ -112,6 +112,7 @@ public class PlayerJoinPatch
                 return;
             }
             DevLogger.Log("Auto Cooldown. Time Remaining: " + GeneralOptions.AdminOptions.AutoCooldown.TimeRemaining());
+            log.Warn("Checking autostart, gonna start game");
             GameStartManager.Instance.BeginGame();
             float timeRemaining = GeneralOptions.AdminOptions.AutoCooldown.TimeRemaining();
             GameStartManager.Instance.countDownTimer = timeRemaining;
@@ -119,6 +120,7 @@ public class PlayerJoinPatch
         else
         {
             if (_autostartLock.AcquireLock()) PluginDataManager.TemplateManager.ShowAll("autostart", PlayerControl.LocalPlayer);
+            log.Warn("Checking autostart, gonna start game (in else branch)");
             GameStartManager.Instance.BeginGame();
             GameStartManager.Instance.countDownTimer = GeneralOptions.AdminOptions.AutoStartGameCountdown;
         }

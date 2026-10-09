@@ -55,6 +55,9 @@ public sealed class GameMaster : CustomRole, IPhantomRole
 
     private void Reset()
     {
+        log.Warn("Hello I am calling reset for GM");
+        if (Game.State is GameState.InLobby) return;
+        log.Warn("I am not in lobby? hopefully?");
         HauntMenuMinigame minigame = DestroyableSingleton<HudManager>.Instance.GetComponentInChildren<HauntMenuMinigame>();
         if (minigame != null) return;
         if (MyPlayer.Data.Role.IsDead) MyPlayer.Data.Role.UseAbility();

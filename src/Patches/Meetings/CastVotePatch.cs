@@ -43,7 +43,7 @@ public class CastVotePatch
             return false;
         }
 
-        __instance.playerStates.ToArray().FirstOrDefault(state => state.PlayerId == srcPlayerId)?.UnsetVote();
+        __instance.playerStates.ToArray().FirstOrDefault(state => state.PlayerId.Value == srcPlayerId)?.UnsetVote();
 
         log.Debug($"Canceled Vote from {voter.GetNameWithRole()}");
         Async.Schedule(() => ClearVote(__instance, voter), NetUtils.DeriveDelay(0.4f));
@@ -55,7 +55,7 @@ public class CastVotePatch
     {
         if (MeetingDelegate.Instance.AlreadyCompleted) return;
         log.Trace($"Clearing vote for: {target.GetNameWithRole()}");
-        hud.playerStates.Where(ps => ps.PlayerId == target.PlayerId).ForEach(ps => ps.VotedForId = byte.MaxValue);
+        hud.playerStates.Where(ps => ps.PlayerId.Value == target.PlayerId).ForEach(ps => ps.VotedForId = byte.MaxValue);
         RpcV3.Immediate(hud.NetId, RpcCalls.ClearVote).Send(target.OwnerId);
     }
 }

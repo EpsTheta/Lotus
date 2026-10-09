@@ -20,7 +20,7 @@ public class ForceSkipAllPatch
         {
             if (currentVotes.GetOrCompute(p.PlayerId, () => []).Any()) return;
             MeetingDelegate.Instance.CastVote(p.PlayerId, Optional<byte>.NonNull(254));
-            __instance.playerStates.First(ps => ps.PlayerId == p.PlayerId).VotedForId = 254;
+            __instance.playerStates.First(ps => ps.PlayerId.Value == p.PlayerId).VotedForId = 254;
         });
     }
 }
