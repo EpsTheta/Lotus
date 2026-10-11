@@ -38,10 +38,10 @@ public static class OnChatPatch
         if (!UseWordList() || !PluginDataManager.ChatManager.HasBannedWord(chatText) || sourcePlayer.IsHost())
         {
             if (PluginDataManager.TemplateManager.CheckAndRunCommand(sourcePlayer, chatText)) return false;
-            if (Game.State is GameState.InLobby) return !chatText.StartsWith("/cmd");
+            if (Game.State is GameState.InLobby) return !chatText.StartsWith("/");
             ActionHandle handle = ActionHandle.NoInit();
             RoleOperations.Current.TriggerForAll(LotusActionType.Chat, sourcePlayer, handle, chatText, Game.State, sourcePlayer.IsAlive());
-            return !chatText.StartsWith("/cmd");
+            return !chatText.StartsWith("/");
         }
         AmongUsClient.Instance.KickPlayerWithMessage(sourcePlayer, $"{sourcePlayer.name}: was kicked by Chat AutoKick.");
         ChatHandler.Send($"{sourcePlayer.name} was kicked by AutoKick.");

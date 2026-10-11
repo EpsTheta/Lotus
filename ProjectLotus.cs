@@ -62,7 +62,7 @@ public class ProjectLotus : BasePlugin, IGitVersionEmitter
     public const string MajorVersion = "1";
     public const string MinorVersion = "7"; // Update with each release
     public const string PatchVersion = "2";
-    public const string BuildNumber = "0005";
+    public const string BuildNumber = "0020";
 
     public static readonly string PluginVersion = typeof(ProjectLotus).Assembly.GetName().Version!.ToString();
 
@@ -141,7 +141,7 @@ public class ProjectLotus : BasePlugin, IGitVersionEmitter
 
         // Setup, order matters here
 
-        CommandRunner.Prefix = "/cmd";
+        CommandRunner.Prefix = "/";
         _harmony.PatchAll(Assembly.GetExecutingAssembly());
 
         new GlobalRoleManager();

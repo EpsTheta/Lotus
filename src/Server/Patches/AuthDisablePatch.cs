@@ -13,7 +13,7 @@ internal static class AuthDisablePatch
 {
     public static bool IsCurrentServerOfficial()
     {
-        const string Domain = "among.us";
+        const string Domain = ".among.us";
 
         return ServerManager.Instance.CurrentRegion?.TryCast<StaticHttpRegionInfo>() is { } regionInfo &&
                regionInfo.PingServer.EndsWith(Domain, StringComparison.Ordinal) &&
